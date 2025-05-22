@@ -1,0 +1,52 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Smooth scrolling for the entire site */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom Training Club colors */
+:root {
+  --primary-main: #9ed6fe;
+  --primary-light: #c9dee7;
+  --primary-dark: #7ab0d8;
+  --secondary-main: #f16c13;
+  --neutral-main: #c8b4a3;
+}
+
+/* Ensure focus is visible for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: 2px;
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-light);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-main);
+}

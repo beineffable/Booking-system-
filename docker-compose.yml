@@ -1,0 +1,123 @@
+version: '3.8'
+
+services:
+  # Backend service
+  backend:
+    build:
+      context: ./backend/fitness_backend
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - backend_uploads:/app/uploads
+    environment:
+      - FLASK_APP=src/main.py
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - DB_USERNAME=${DB_USERNAME:-fitness_user}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_NAME=${DB_NAME:-fitness_platform}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change_this_in_production}
+      - STRIPE_API_KEY=${STRIPE_API_KEY:-}
+      - TWINT_MERCHANT_ID=${TWINT_MERCHANT_ID:-}
+      - MANUS_API_KEY=${MANUS_API_KEY:-}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend service
+  frontend:
+    build:
+      context: ./frontend/fitness_frontend
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - REACT_APP_API_URL=${REACT_APP_API_URL:-/api}
+      - REACT_APP_STRIPE_PUBLIC_KEY=${REACT_APP_STRIPE_PUBLIC_KEY:-}
+    depends_on:
+      - backend
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Database service
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootpassword}
+      - MYSQL_DATABASE=${DB_NAME:-fitness_platform}
+      - MYSQL_USER=${DB_USERNAME:-fitness_user}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-password}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis service
+  redis:
+    image: redis:alpine
+    restart: always
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Nginx proxy service
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/www:/var/www/html
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  backend_uploads:
+  db_data:
+  redis_data:
